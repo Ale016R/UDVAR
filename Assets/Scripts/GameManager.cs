@@ -8,10 +8,9 @@ public class GameManager : MonoBehaviour
     public class QA
     {
         public string pregunta;
-        public string respuestaMarkerId; // nombre EXACTO del marcador
+        public string respuestaMarkerId;
     }
 
-    // Banco de preguntas y respuestas
     public QA[] banco = new QA[]
     {
         new QA{ pregunta = "¿Cuál es la figura 1?", respuestaMarkerId = "Figura1" },
@@ -20,14 +19,23 @@ public class GameManager : MonoBehaviour
 
     private QA actual;
 
-    // 🔹 Variables del ciclo del juego
+    // Ciclo del juego
     private int contadorCorrectas = 0;
-    public int meta = 3; // Cuántas correctas seguidas para ganar
+    public int meta = 3;
 
-    // 🔹 Referencias UI
+    // UI
     [Header("Referencias UI")]
-    public Text mensajeUI;   // Texto principal de mensajes
-    public Text contadorUI;  // Texto del contador (1/3, 2/3, etc.)
+    public Text mensajeUI;
+    public Text contadorUI;
+    public Slider barraProgreso;
+
+
+    // 🔊 Sonidos
+    [Header("Audio")]
+    public AudioClip sonidoCorrecto;
+    public AudioClip sonidoIncorrecto;
+    public AudioClip sonidoVictoria;
+    public AudioSource fuenteAudio;
 
     void Start()
     {
@@ -52,8 +60,11 @@ public class GameManager : MonoBehaviour
         if (a == b)
         {
             contadorCorrectas++;
-            Debug.Log($"✅ Correcto ({contadorCorrectas}/{meta})");
             ActualizarTexto($"✅ ¡Correcto! ({contadorCorrectas}/{meta})");
+
+            // 🔊 Reproducir sonido correcto
+            if (fuenteAudio && sonidoCorrecto)
+                fuenteAudio.PlayOneShot(sonidoCorrecto);
 
             if (contadorCorrectas >= meta)
             {
@@ -66,9 +77,13 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("❌ Incorrecto → contador reiniciado");
-            ActualizarTexto("❌ Incorrecto, contador reiniciado");
             contadorCorrectas = 0;
+            ActualizarTexto("❌ Incorrecto, contador reiniciado");
+
+            // 🔊 Reproducir sonido incorrecto
+            if (fuenteAudio && sonidoIncorrecto)
+                fuenteAudio.PlayOneShot(sonidoIncorrecto);
+
             NuevaPregunta();
         }
 
@@ -77,10 +92,13 @@ public class GameManager : MonoBehaviour
 
     void GanarJuego()
     {
-        Debug.Log("🎉 ¡Ganaste el juego!");
         ActualizarTexto("🎉 ¡Ganaste el juego! 🎉");
         contadorCorrectas = 0;
         ActualizarUI();
+
+        // 🔊 Reproducir sonido de victoria
+        if (fuenteAudio && sonidoVictoria)
+            fuenteAudio.PlayOneShot(sonidoVictoria);
     }
 
     void ActualizarTexto(string texto)
@@ -93,5 +111,9 @@ public class GameManager : MonoBehaviour
     {
         if (contadorUI != null)
             contadorUI.text = $"{contadorCorrectas} / {meta}";
+
+        if (barraProgreso != null)
+            barraProgreso.value = contadorCorrectas;
     }
+
 }
