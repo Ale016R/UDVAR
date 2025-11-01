@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using Vuforia;
 
 public class GameManager : MonoBehaviour
@@ -7,28 +8,38 @@ public class GameManager : MonoBehaviour
     public class QA
     {
         public string pregunta;
-        // usa el nombre EXACTO del target en la base (normalmente minúsculas)
-        public string respuestaMarkerId; 
+        public string respuestaMarkerId; // nombre EXACTO del marcador
     }
 
-    // Ajusta estos nombres a los de tu dataset (parece que son "geometrico" y "geometrico2")
+    // Banco de preguntas y respuestas
     public QA[] banco = new QA[]
     {
-        new QA{ pregunta = "Which one is the Sphere?", respuestaMarkerId = "gemetrico" },
-        new QA{ pregunta = "Which one is the Cube?",   respuestaMarkerId = "geometrico2" }
+        new QA{ pregunta = "¿Cuál es la figura 1?", respuestaMarkerId = "Figura1" },
+        new QA{ pregunta = "¿Cuál es la figura 2?", respuestaMarkerId = "Figura2" }
     };
 
     private QA actual;
 
+    // 🔹 Variables del ciclo del juego
+    private int contadorCorrectas = 0;
+    public int meta = 3; // Cuántas correctas seguidas para ganar
+
+    // 🔹 Referencias UI
+    [Header("Referencias UI")]
+    public Text mensajeUI;   // Texto principal de mensajes
+    public Text contadorUI;  // Texto del contador (1/3, 2/3, etc.)
+
     void Start()
     {
         NuevaPregunta();
+        ActualizarUI();
     }
 
     void NuevaPregunta()
     {
         actual = banco[Random.Range(0, banco.Length)];
-        Debug.Log($"Pregunta: {actual.pregunta} (esperada: {actual.respuestaMarkerId})");
+        Debug.Log($"Nueva pregunta: {actual.pregunta} (esperada: {actual.respuestaMarkerId})");
+        ActualizarTexto($"Pregunta: {actual.pregunta}");
     }
 
     public void ValidarRespuesta(string markerIdDetectado)
@@ -40,13 +51,47 @@ public class GameManager : MonoBehaviour
 
         if (a == b)
         {
-            Debug.Log("✅ Correcto!");
-            // Si quieres que pase a la siguiente:
-            // NuevaPregunta();
+            contadorCorrectas++;
+            Debug.Log($"✅ Correcto ({contadorCorrectas}/{meta})");
+            ActualizarTexto($"✅ ¡Correcto! ({contadorCorrectas}/{meta})");
+
+            if (contadorCorrectas >= meta)
+            {
+                GanarJuego();
+            }
+            else
+            {
+                NuevaPregunta();
+            }
         }
         else
         {
-            Debug.Log("❌ Incorrecto!");
+            Debug.Log("❌ Incorrecto → contador reiniciado");
+            ActualizarTexto("❌ Incorrecto, contador reiniciado");
+            contadorCorrectas = 0;
+            NuevaPregunta();
         }
+
+        ActualizarUI();
+    }
+
+    void GanarJuego()
+    {
+        Debug.Log("🎉 ¡Ganaste el juego!");
+        ActualizarTexto("🎉 ¡Ganaste el juego! 🎉");
+        contadorCorrectas = 0;
+        ActualizarUI();
+    }
+
+    void ActualizarTexto(string texto)
+    {
+        if (mensajeUI != null)
+            mensajeUI.text = texto;
+    }
+
+    void ActualizarUI()
+    {
+        if (contadorUI != null)
+            contadorUI.text = $"{contadorCorrectas} / {meta}";
     }
 }
